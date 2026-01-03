@@ -13,7 +13,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import settings
 from app.core.database import get_session_context
-from app.exceptions import RabbitMQError
+from app.exceptions import ProcessingError, RabbitMQError
 from app.models import ProcessingStatus, VideoDocument
 
 logger = logging.getLogger(__name__)
@@ -217,14 +217,30 @@ class VideoProcessorConsumer:
 
                 # Trigger processing pipeline
                 if self._process_callback is not None:
-                    await self._process_callback(video_id)
+                    try:
+                        await self._process_callback(video_id)
+                        logger.info(f"Successfully processed video: {video_id}")
+                    except ProcessingError as e:
+                        logger.error(f"Processing failed for {video_id}: {e.message}")
+                        await self._publish_to_dlq(
+                            video_id=video_id,
+                            error_message=e.message,
+                            attempt_count=1,
+                        )
                 else:
-                    # Placeholder: Log the video_id for now
-                    # Full processing pipeline will be implemented in Phase 6
-                    logger.info(
-                        f"Would process video: {video_id} "
-                        "(processing pipeline not yet implemented)"
-                    )
+                    # Import here to avoid circular imports
+                    from app.services.processing_pipeline import process_video
+
+                    try:
+                        await process_video(video_id)
+                        logger.info(f"Successfully processed video: {video_id}")
+                    except ProcessingError as e:
+                        logger.error(f"Processing failed for {video_id}: {e.message}")
+                        await self._publish_to_dlq(
+                            video_id=video_id,
+                            error_message=e.message,
+                            attempt_count=1,
+                        )
 
             except json.JSONDecodeError as e:
                 logger.error(f"Invalid JSON in message: {e}")

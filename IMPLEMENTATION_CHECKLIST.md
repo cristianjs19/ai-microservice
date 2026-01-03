@@ -95,25 +95,25 @@ Reference: [PRD_v2.md](PRD_v2.md) for detailed specifications.
 **Goal**: Implement LLM-based formatting, token-based chunking, and embedding generation.
 
 ### 5A: Formatting Service (AI Agent 1)
-- [ ] **5.1** Create `app/services/formatting_service.py` from PRD Section 6.3
-- [ ] **5.2** Configure `ChatOpenAI` with OpenRouter settings (api_key, base_url, model)
-- [ ] **5.3** Implement formatting prompt template (NO SUMMARIZATION, add paragraph breaks, fix punctuation)
-- [ ] **5.4** Add 60-second timeout and retry logic (max 3 retries on rate limits)
+- [x] **5.1** Create `app/services/formatting_service.py` from PRD Section 6.3
+- [x] **5.2** Configure `ChatOpenAI` with OpenRouter settings (api_key, base_url, model)
+- [x] **5.3** Implement formatting prompt template (NO SUMMARIZATION, add paragraph breaks, fix punctuation)
+- [x] **5.4** Add 60-second timeout and retry logic (max 3 retries on rate limits)
 - [ ] **5.5** Write unit test with mocked LLM response
 
 ### 5B: Chunking Service
-- [ ] **5.6** Create `app/services/chunking_service.py` from PRD Section 6.4
-- [ ] **5.7** Implement `RecursiveCharacterTextSplitter` with tiktoken length function
-- [ ] **5.8** Configure: chunk_size=400 tokens, overlap=50 tokens, separators=["\n\n", "\n", ". ", " "]
-- [ ] **5.9** Return list of `(chunk_index, content)` tuples
+- [x] **5.6** Create `app/services/chunking_service.py` from PRD Section 6.4
+- [x] **5.7** Implement `RecursiveCharacterTextSplitter` with tiktoken length function
+- [x] **5.8** Configure: chunk_size=400 tokens, overlap=50 tokens, separators=["\n\n", "\n", ". ", " "]
+- [x] **5.9** Return list of `(chunk_index, content)` tuples
 - [ ] **5.10** Write unit test with sample text
 
 ### 5C: Embedding Service
-- [ ] **5.11** Create `app/services/embedding_service.py` from PRD Section 6.5
-- [ ] **5.12** Configure `OpenAIEmbeddings` with OpenRouter for `baai/bge-base-en-v1.5`
-- [ ] **5.13** Implement `embed_documents(chunks: List[str]) -> List[List[float]]`
-- [ ] **5.14** Validate embedding dimensions (must be 768)
-- [ ] **5.15** Add retry logic for rate limits
+- [x] **5.11** Create `app/services/embedding_service.py` from PRD Section 6.5
+- [x] **5.12** Configure `OpenAIEmbeddings` with OpenRouter for `baai/bge-base-en-v1.5`
+- [x] **5.13** Implement `embed_documents(chunks: List[str]) -> List[List[float]]`
+- [x] **5.14** Validate embedding dimensions (must be 768)
+- [x] **5.15** Add retry logic for rate limits
 - [ ] **5.16** Write unit test with mocked embedding response
 
 **Verification**:
@@ -130,14 +130,14 @@ Reference: [PRD_v2.md](PRD_v2.md) for detailed specifications.
 
 **Goal**: Wire up all services in the RabbitMQ consumer to complete the ingestion pipeline.
 
-- [ ] **6.1** In `video_processor.py`, fetch video data using `FetchingServiceClient`
-- [ ] **6.2** Create `VideoDocument` record (status=PENDING)
-- [ ] **6.3** Call `FormattingService` → update `formatted_content` and status=PROCESSING
-- [ ] **6.4** Call `ChunkingService` → get chunk list
-- [ ] **6.5** Call `EmbeddingService` → get embedding vectors
-- [ ] **6.6** Create `VideoChunk` records with embeddings
-- [ ] **6.7** Update `VideoDocument` status=COMPLETED
-- [ ] **6.8** Implement error handling: update status=FAILED, store error_message, publish to DLQ
+- [x] **6.1** In `video_processor.py`, fetch video data using `FetchingServiceClient`
+- [x] **6.2** Create `VideoDocument` record (status=PENDING)
+- [x] **6.3** Call `FormattingService` → update `formatted_content` and status=PROCESSING
+- [x] **6.4** Call `ChunkingService` → get chunk list
+- [x] **6.5** Call `EmbeddingService` → get embedding vectors
+- [x] **6.6** Create `VideoChunk` records with embeddings
+- [x] **6.7** Update `VideoDocument` status=COMPLETED
+- [x] **6.8** Implement error handling: update status=FAILED, store error_message, publish to DLQ
 - [ ] **6.9** Write integration test for full pipeline (mock external APIs)
 
 **Verification**:
@@ -154,18 +154,18 @@ Reference: [PRD_v2.md](PRD_v2.md) for detailed specifications.
 **Goal**: Implement query validation/transformation and vector search.
 
 ### 7A: Query Guardrail (AI Agent 2)
-- [ ] **7.1** Create `app/services/rag_service.py` from PRD Section 6.6
-- [ ] **7.2** Implement query guardrail prompt template (GARBAGE→INVALID, INCOMPLETE→error, VAGUE→rewrite, GOOD→pass)
-- [ ] **7.3** Parse LLM JSON response to extract status/transformed_query/error_message
+- [x] **7.1** Create `app/services/rag_service.py` from PRD Section 6.6
+- [x] **7.2** Implement query guardrail prompt template (GARBAGE→INVALID, INCOMPLETE→error, VAGUE→rewrite, GOOD→pass)
+- [x] **7.3** Parse LLM JSON response to extract status/transformed_query/error_message
 - [ ] **7.4** Write unit tests for each guardrail case (garbage, incomplete, vague, good)
 
 ### 7B: Vector Search
-- [ ] **7.5** Implement query embedding (same embedding service)
-- [ ] **7.6** Implement PGVector cosine similarity search (see PRD Section 6.6 Step 3 SQL)
-- [ ] **7.7** Add similarity threshold filtering (default 0.7, meaning distance < 0.3)
-- [ ] **7.8** Add optional channel_id filtering
-- [ ] **7.9** Implement context fetching (get chunk_index ± 1 neighbors)
-- [ ] **7.10** Group results by video_id, extract metadata
+- [x] **7.5** Implement query embedding (same embedding service)
+- [x] **7.6** Implement PGVector cosine similarity search (see PRD Section 6.6 Step 3 SQL)
+- [x] **7.7** Add similarity threshold filtering (default 0.7, meaning distance < 0.3)
+- [x] **7.8** Add optional channel_id filtering
+- [x] **7.9** Implement context fetching (get chunk_index ± 1 neighbors)
+- [x] **7.10** Group results by video_id, extract metadata
 - [ ] **7.11** Write integration test with test data in DB
 
 **Verification**:
@@ -182,17 +182,17 @@ Reference: [PRD_v2.md](PRD_v2.md) for detailed specifications.
 
 **Goal**: Implement REST API endpoints for search and monitoring.
 
-- [ ] **8.1** Create `app/api/v1/schemas/search.py` with request/response schemas from PRD Section 8
-- [ ] **8.2** Create `app/api/v1/schemas/__init__.py`
-- [ ] **8.3** Create `app/api/v1/endpoints/search.py` with `POST /api/v1/search` endpoint
-- [ ] **8.4** Create `app/api/v1/endpoints/stats.py` with `GET /api/v1/stats` endpoint
-- [ ] **8.5** Create `app/api/v1/endpoints/__init__.py`
-- [ ] **8.6** Create `app/api/v1/__init__.py`
-- [ ] **8.7** Create `app/api/router.py` aggregating all v1 routes
-- [ ] **8.8** Create `app/api/deps.py` with dependency injection (db session, services)
-- [ ] **8.9** Create `app/api/__init__.py`
-- [ ] **8.10** Create `app/main.py` with FastAPI app, lifespan events, router registration
-- [ ] **8.11** Add `/health` and `/ready` endpoints
+- [x] **8.1** Create `app/api/v1/schemas/search.py` with request/response schemas from PRD Section 8
+- [x] **8.2** Create `app/api/v1/schemas/__init__.py`
+- [x] **8.3** Create `app/api/v1/endpoints/search.py` with `POST /api/v1/search` endpoint
+- [x] **8.4** Create `app/api/v1/endpoints/stats.py` with `GET /api/v1/stats` endpoint
+- [x] **8.5** Create `app/api/v1/endpoints/__init__.py`
+- [x] **8.6** Create `app/api/v1/__init__.py`
+- [x] **8.7** Create `app/api/router.py` aggregating all v1 routes
+- [x] **8.8** Create `app/api/deps.py` with dependency injection (db session, services)
+- [x] **8.9** Create `app/api/__init__.py`
+- [x] **8.10** Create `app/main.py` with FastAPI app, lifespan events, router registration
+- [x] **8.11** Add `/health` and `/ready` endpoints
 - [ ] **8.12** Write integration tests for search endpoint
 
 **Verification**:

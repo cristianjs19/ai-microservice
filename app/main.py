@@ -6,6 +6,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 
+from app.api.router import api_router
 from app.config import settings
 from app.consumers.video_processor import (
     get_consumer,
@@ -121,6 +122,5 @@ async def readiness_check():
     }
 
 
-# TODO: Import and register API routers here when implemented
-# from app.api.router import api_router
-# app.include_router(api_router, prefix=settings.api_v1_prefix)
+# Register API routers
+app.include_router(api_router)
