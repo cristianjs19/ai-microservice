@@ -9,14 +9,14 @@ Reference: [PRD_v2.md](PRD_v2.md) for detailed specifications.
 
 **Goal**: Create project scaffolding, dependencies, and configuration.
 
-- [ ] **1.1** Create folder structure as defined in PRD Section 3 (`app/`, `app/core/`, `app/models/`, `app/consumers/`, `app/services/`, `app/api/v1/schemas/`, `app/api/v1/endpoints/`, `tests/`, `alembic/`)
+- [x] **1.1** Create folder structure as defined in PRD Section 3 (`app/`, `app/core/`, `app/models/`, `app/consumers/`, `app/services/`, `app/api/v1/schemas/`, `app/api/v1/endpoints/`, `tests/`, `alembic/`)
 - [x] **1.2** Create `requirements.txt` from PRD Section 2.3 (production deps only)
 - [x] **1.3** Create `requirements-dev.txt` with testing dependencies (pytest, respx, polyfactory, testcontainers)
 - [x] **1.4** Update `sample.env` with all required variables from PRD Section 11.1
-- [ ] **1.5** Create `.gitignore` for Python/FastAPI project (must include `.env`, `__pycache__/`, `.venv/`, `*.pyc`)
-- [ ] **1.6** Create `app/config.py` with Settings class from PRD Section 11.2
-- [ ] **1.7** Create `app/exceptions.py` with custom exceptions (ProcessingError, FetchingServiceError, EmbeddingError, QueryGuardrailError)
-- [ ] **1.8** Create all `__init__.py` files in the folder structure
+- [x] **1.5** Create `.gitignore` for Python/FastAPI project (must include `.env`, `__pycache__/`, `.venv/`, `*.pyc`)
+- [x] **1.6** Create `app/config.py` with Settings class from PRD Section 11.2
+- [x] **1.7** Create `app/exceptions.py` with custom exceptions (ProcessingError, FetchingServiceError, EmbeddingError, QueryGuardrailError)
+- [x] **1.8** Create all `__init__.py` files in the folder structure
 
 **Verification**: 
 1. Run `pip install -r requirements.txt` successfully
@@ -31,13 +31,13 @@ Reference: [PRD_v2.md](PRD_v2.md) for detailed specifications.
 
 **Goal**: Set up async SQLAlchemy models with PGVector support. Alembic will inspect these models to generate migrations.
 
-- [ ] **2.1** Relocate existing `base.py` from root to `app/models/base.py` (file exists, just move and update import paths)
-- [ ] **2.2** Relocate existing `video_models.py` from root to `app/models/videos.py` (file exists, just move and update import paths)
-- [ ] **2.3** Create `app/models/__init__.py` exporting Base, VideoDocument, VideoChunk, ProcessingStatus
-- [ ] **2.4** Create `app/core/database.py` with async engine, session factory, and PGVector extension setup (see PRD Section 11.3 docker-compose for connection settings)
-- [ ] **2.5** Create `app/core/__init__.py`
-- [ ] **2.6** Initialize Alembic: `alembic init alembic`
-- [ ] **2.7** Configure `alembic/env.py` for async SQLAlchemy with PGVector (import models, set target_metadata)
+- [x] **2.1** Relocate existing `base.py` from root to `app/models/base.py` (file exists, just move and update import paths)
+- [x] **2.2** Relocate existing `video_models.py` from root to `app/models/videos.py` (file exists, just move and update import paths)
+- [x] **2.3** Create `app/models/__init__.py` exporting Base, VideoDocument, VideoChunk, ProcessingStatus
+- [x] **2.4** Create `app/core/database.py` with async engine, session factory, and PGVector extension setup (see PRD Section 11.3 docker-compose for connection settings)
+- [x] **2.5** Create `app/core/__init__.py`
+- [x] **2.6** Initialize Alembic: `alembic init alembic`
+- [x] **2.7** Configure `alembic/env.py` for async SQLAlchemy with PGVector (import models, set target_metadata)
 - [ ] **2.8** Generate initial migration: `alembic revision --autogenerate -m "Initial tables with PGVector"`
 - [ ] **2.9** Run migration: `alembic upgrade head`
 
@@ -54,12 +54,12 @@ Reference: [PRD_v2.md](PRD_v2.md) for detailed specifications.
 
 **Goal**: Implement HTTP client to communicate with the Fetching Service (yt-scraper).
 
-- [ ] **3.1** Create `app/services/fetching_client.py` with `FetchingServiceClient` class from PRD Section 6.1
-- [ ] **3.2** Implement `get_video_metadata(video_id: str) -> dict` method
-- [ ] **3.3** Implement `get_video_caption(video_id: str) -> str` method
-- [ ] **3.4** Add connection lifecycle methods (`__aenter__`, `__aexit__` or explicit `close()`)
-- [ ] **3.5** Add exponential backoff retry logic (4 attempts, 2s base delay)
-- [ ] **3.6** Create `app/services/__init__.py`
+- [x] **3.1** Create `app/services/fetching_client.py` with `FetchingServiceClient` class from PRD Section 6.1
+- [x] **3.2** Implement `get_video_metadata(video_id: str) -> dict` method
+- [x] **3.3** Implement `get_video_caption(video_id: str) -> str` method
+- [x] **3.4** Add connection lifecycle methods (`__aenter__`, `__aexit__` or explicit `close()`)
+- [x] **3.5** Add exponential backoff retry logic (4 attempts, 2s base delay)
+- [x] **3.6** Create `app/services/__init__.py`
 
 **Verification**:
 1. Unit test with `respx` mocking HTTP responses
@@ -73,13 +73,13 @@ Reference: [PRD_v2.md](PRD_v2.md) for detailed specifications.
 
 **Goal**: Set up message consumer to listen for `transcript.fetched` events.
 
-- [ ] **4.1** Create `app/consumers/video_processor.py` with consumer class from PRD Section 6.2
-- [ ] **4.2** Implement RabbitMQ connection using `aio-pika` (connection, channel, queue binding)
-- [ ] **4.3** Implement message handler skeleton (receives message, logs video_id)
-- [ ] **4.4** Add duplicate check logic (query VideoDocument by source_video_id)
-- [ ] **4.5** Create `app/consumers/__init__.py`
-- [ ] **4.6** Add consumer startup to FastAPI lifespan events in `app/main.py`
-- [ ] **4.7** Implement dead-letter queue (DLQ) publishing for failed messages
+- [x] **4.1** Create `app/consumers/video_processor.py` with consumer class from PRD Section 6.2
+- [x] **4.2** Implement RabbitMQ connection using `aio-pika` (connection, channel, queue binding)
+- [x] **4.3** Implement message handler skeleton (receives message, logs video_id)
+- [x] **4.4** Add duplicate check logic (query VideoDocument by source_video_id)
+- [x] **4.5** Create `app/consumers/__init__.py`
+- [x] **4.6** Add consumer startup to FastAPI lifespan events in `app/main.py`
+- [x] **4.7** Implement dead-letter queue (DLQ) publishing for failed messages
 
 **Verification**:
 1. Publish test message to RabbitMQ queue
