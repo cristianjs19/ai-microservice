@@ -1,7 +1,7 @@
 # ---------------------------------------
 # Stage 1: Builder
 # ---------------------------------------
-FROM python:3.11-slim AS builder
+FROM python:3.12-slim AS builder
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     gcc \
@@ -20,7 +20,7 @@ RUN uv venv /app/.venv && \
 # ---------------------------------------
 # Stage 2: Runner
 # ---------------------------------------
-FROM python:3.11-slim
+FROM python:3.12-slim
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libpq-5 \
@@ -30,9 +30,9 @@ WORKDIR /app
 
 COPY --from=builder /app/.venv /app/.venv
 
-COPY src /app/src
-# Copy the .env.example just in case code relies on checking it (optional)
-COPY .env.example /app/.env.example
+COPY app/ ./app/
+COPY alembic/ ./alembic/
+COPY alembic.ini .
 
 ENV PATH="/app/.venv/bin:$PATH" \
     PYTHONUNBUFFERED=1 \
@@ -40,4 +40,5 @@ ENV PATH="/app/.venv/bin:$PATH" \
 
 EXPOSE 8000
 
-CMD ["uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Run migrations and start service
+CMD ["sh", "-c", "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8000"]
