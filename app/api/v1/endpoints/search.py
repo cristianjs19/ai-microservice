@@ -1,10 +1,12 @@
 """Search API endpoint."""
 
 import logging
+import time
+from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException
 
-from app.api.deps import get_rag
+from app.api.deps import get_current_user_optional, get_rag, get_search_history_repository
 from app.api.v1.schemas import (
     ChunkContext,
     ErrorResponse,
@@ -13,6 +15,8 @@ from app.api.v1.schemas import (
     SearchResultItem,
 )
 from app.exceptions import EmbeddingError, QueryGuardrailError
+from app.models.users import User
+from app.repositories.users import SearchHistoryRepository
 from app.services.rag_service import RAGService
 
 logger = logging.getLogger(__name__)
@@ -35,17 +39,27 @@ router = APIRouter()
     being embedded and compared against stored video chunks.
     
     Results include context (previous and next segments) for each match.
+    
+    **Authentication is OPTIONAL** - the endpoint works for both authenticated
+    and anonymous users. If authenticated, the search is logged to the user's
+    search history for future reference.
     """,
 )
 async def search(
     request: SearchQueryRequest,
-    rag_service: RAGService = Depends(get_rag),
+    rag_service: Annotated[RAGService, Depends(get_rag)],
+    current_user: Annotated[User | None, Depends(get_current_user_optional)] = None,
+    search_history_repo: Annotated[
+        SearchHistoryRepository, Depends(get_search_history_repository)
+    ] = None,
 ) -> SearchResponse:
     """Search for relevant video segments.
 
     Args:
         request: Search query parameters.
         rag_service: Injected RAG service.
+        current_user: Optional authenticated user (for history tracking).
+        search_history_repo: Search history repository (for tracking).
 
     Returns:
         SearchResponse: Search results with context.
@@ -53,6 +67,8 @@ async def search(
     Raises:
         HTTPException: 400 if query is invalid/incomplete, 500 on server error.
     """
+    start_time = time.time()
+
     try:
         result = await rag_service.search(
             query=request.query,
@@ -80,12 +96,36 @@ async def search(
             for item in result.results
         ]
 
-        return SearchResponse(
+        response = SearchResponse(
             query=result.query,
             transformed_query=result.transformed_query,
             results=response_items,
             total_results=result.total_results,
         )
+
+        # Track search history for authenticated users
+        if current_user and search_history_repo:
+            processing_time_ms = int((time.time() - start_time) * 1000)
+            try:
+                await search_history_repo.create_search_record(
+                    user_id=current_user.id,
+                    query=request.query,
+                    transformed_query=result.transformed_query,
+                    channel_id=request.channel_id,
+                    top_k=request.top_k,
+                    similarity_threshold=request.similarity_threshold,
+                    results_count=result.total_results,
+                    processing_time_ms=processing_time_ms,
+                )
+                logger.info(
+                    f"Search history recorded for user {current_user.id}: "
+                    f"{request.query[:50]}..."
+                )
+            except Exception as e:
+                # Don't fail the request if history tracking fails
+                logger.error(f"Failed to record search history: {e}")
+
+        return response
 
     except QueryGuardrailError as e:
         logger.warning(f"Query validation failed: {e.message}")

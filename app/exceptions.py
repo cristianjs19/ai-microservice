@@ -70,3 +70,27 @@ class DatabaseError(AIServiceError):
     """Raised when database operations fail."""
 
     pass
+
+
+class AuthenticationError(AIServiceError):
+    """Raised when authentication fails."""
+
+    pass
+
+
+class AuthorizationError(AIServiceError):
+    """Raised when authorization/permission check fails."""
+
+    pass
+
+
+class UserNotFoundError(AIServiceError):
+    """Raised when a user is not found."""
+
+    pass
+
+
+class DuplicateUserError(AIServiceError):
+    """Raised when attempting to create a user that already exists."""
+
+    pass

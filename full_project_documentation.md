@@ -8,11 +8,22 @@ A FastAPI-based microservice that processes raw video transcripts, formats them 
 
 ## API Endpoints
 
+### Authentication Endpoints
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `POST` | `/api/v1/auth/register` | Register new user (email, password, optional phone/name) |
+| `POST` | `/api/v1/auth/login` | Login with email and password, returns JWT tokens |
+| `POST` | `/api/v1/auth/refresh` | Refresh access token using refresh token |
+| `GET` | `/api/v1/auth/me` | Get current user profile (requires authentication) |
+| `PATCH` | `/api/v1/auth/me` | Update user profile (requires authentication) |
+| `GET` | `/api/v1/auth/me/search-history` | Get user's search history with pagination (requires authentication) |
+
 ### Core Search & Processing Endpoints
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| `POST` | `/api/v1/search` | Perform RAG query with optional filtering (query, channel_id, top_k, similarity_threshold) |
+| `POST` | `/api/v1/search` | Perform RAG query with optional authentication (query, channel_id, top_k, similarity_threshold). If authenticated, search is tracked in history |
 | `POST` | `/api/v1/process-video-by-id` | Manually trigger processing for a specific source_video_id (testing/debugging) |
 | `GET` | `/api/v1/stats` | Get service statistics (processed count, pending count, failed count, total chunks) |
 
@@ -70,6 +81,8 @@ The service uses **event-driven architecture** with RabbitMQ:
 | **LLM Access** | langchain-openai | >=0.2.0 | OpenAI-compatible API interface (OpenRouter) |
 | **HTTP Client** | httpx | >=0.28.0 | Async HTTP calls to Fetching Service |
 | **Token Counting** | tiktoken | >=0.7.0 | Accurate token-based chunk sizing |
+| **Authentication** | python-jose | >=3.3.0 | JWT token generation and validation |
+| **Password Hashing** | passlib[bcrypt] | >=1.7.4 | Secure password hashing with bcrypt |
 
 ### AI Models (via OpenRouter)
 
@@ -84,6 +97,28 @@ The service uses **event-driven architecture** with RabbitMQ:
 ## Data Models
 
 ### Database Schema
+
+**User** (Authentication)
+- `id`: UUID primary key
+- `email`: Email address (unique, primary identifier)
+- `hashed_password`: Bcrypt hashed password
+- `phone`: Phone number (optional, unique if provided)
+- `full_name`: Full name (optional)
+- `is_active`: Account active status
+- `is_superuser`: Admin privileges flag
+- `created_at`, `updated_at`: Timestamps
+
+**SearchHistory** (User activity tracking)
+- `id`: UUID primary key
+- `user_id`: FK to User
+- `query`: Original search query
+- `transformed_query`: AI-transformed query
+- `channel_id`: Optional channel filter
+- `top_k`: Number of results requested
+- `similarity_threshold`: Similarity threshold used
+- `results_count`: Number of results returned
+- `processing_time_ms`: Processing time in milliseconds
+- `created_at`: Timestamp
 
 **VideoDocument** (Parent model)
 - `id`: UUID primary key
@@ -162,5 +197,23 @@ Key environment variables:
 - `DATABASE_URL`: PostgreSQL connection string with PGVector support
 - `RABBITMQ_URL`: RabbitMQ connection URL
 - `LOG_LEVEL`: Logging level (default: `INFO`)
+- `JWT_SECRET_KEY`: Secret key for JWT token signing (required for authentication)
+- `JWT_ALGORITHM`: JWT signing algorithm (default: `HS256`)
+- `JWT_ACCESS_TOKEN_EXPIRE_MINUTES`: Access token expiration in minutes (default: `30`)
+- `JWT_REFRESH_TOKEN_EXPIRE_DAYS`: Refresh token expiration in days (default: `7`)
+
+---
+
+## Authentication
+
+The service includes JWT-based authentication with the following features:
+- **Email-based login**: Users authenticate with email and password
+- **Optional authentication**: Search endpoint works for both authenticated and anonymous users
+- **Automatic history tracking**: Authenticated searches are automatically logged
+- **Token-based auth**: Access tokens (30min) and refresh tokens (7 days)
+- **Secure passwords**: Bcrypt hashing with strength requirements (8+ chars, uppercase, lowercase, digit)
+- **User profiles**: Optional phone and full name fields
+
+See `AUTHENTICATION.md` for complete documentation.
 
 ---

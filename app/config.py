@@ -62,6 +62,12 @@ class Settings(BaseSettings):
     api_title: str = "AI Processing Service"
     api_version: str = "2.1.0"
 
+    # JWT Authentication
+    jwt_secret_key: str
+    jwt_algorithm: str = "HS256"
+    jwt_access_token_expire_minutes: int = 30
+    jwt_refresh_token_expire_days: int = 7
+
 
 @lru_cache
 def get_settings() -> Settings:
