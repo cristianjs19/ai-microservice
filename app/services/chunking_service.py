@@ -7,7 +7,7 @@ suitable for embedding generation.
 import logging
 
 import tiktoken
-from langchain.text_splitter import RecursiveCharacterTextSplitter
+from langchain_text_splitters import RecursiveCharacterTextSplitter
 
 from app.config import settings
 from app.exceptions import ChunkingError
@@ -105,9 +105,7 @@ class ChunkingService:
             # Log token counts for debugging
             for idx, content in indexed_chunks:
                 token_count = self._token_length(content)
-                logger.debug(
-                    f"Chunk {idx}: {token_count} tokens, {len(content)} chars"
-                )
+                logger.debug(f"Chunk {idx}: {token_count} tokens, {len(content)} chars")
 
             return indexed_chunks
 

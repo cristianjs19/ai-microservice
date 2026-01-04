@@ -18,14 +18,10 @@ from app.core.database import (
     close_database,
     init_pgvector_extension,
 )
+from app.core.logging_config import configure_logging
 
 # Configure logging
-logging.basicConfig(
-    level=getattr(logging, settings.log_level.upper()),
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-    if settings.log_format != "json"
-    else '{"time": "%(asctime)s", "name": "%(name)s", "level": "%(levelname)s", "message": "%(message)s"}',
-)
+configure_logging(settings)
 logger = logging.getLogger(__name__)
 
 # Background task for consumer

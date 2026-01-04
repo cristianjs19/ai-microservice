@@ -17,6 +17,8 @@ psycopg[binary]>=3.1.0
 langchain>=0.3.0
 langchain-core>=0.3.0
 langgraph>=0.2.0
+# Text splitting utilities (required for RecursiveCharacterTextSplitter)
+langchain-text-splitters>=0.0.1
 # We use this for BOTH LLM and Embeddings via OpenRouter
 langchain-openai>=0.2.0 
 tiktoken>=0.7.0

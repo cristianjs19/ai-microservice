@@ -22,6 +22,7 @@ class Settings(BaseSettings):
     # Application
     app_name: str = "Video AI Processor"
     env: str = "production"
+    debug: bool = False
     log_level: str = "INFO"
     log_format: str = "json"
     service_name: str = "ai-processing-service"
