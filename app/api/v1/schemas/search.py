@@ -148,3 +148,36 @@ class ReadyResponse(BaseModel):
 
     ready: bool
     checks: dict[str, str]
+
+
+# ============================================================
+# Video List Schemas
+# ============================================================
+
+
+class VideoListItem(BaseModel):
+    """A single video item in the list response."""
+
+    id: str = Field(..., description="Video document UUID")
+    source_video_id: str = Field(..., description="YouTube video ID")
+    source_channel_id: Optional[str] = Field(None, description="YouTube channel ID")
+    status: str = Field(
+        ..., description="Processing status (pending/processing/completed/failed)"
+    )
+    title: Optional[str] = Field(None, description="Video title from metadata")
+    channel_name: Optional[str] = Field(None, description="Channel name from metadata")
+    published_at: Optional[str] = Field(
+        None, description="Publication date from metadata"
+    )
+    created_at: str = Field(..., description="When the document was created")
+    updated_at: str = Field(..., description="When the document was last updated")
+
+
+class VideoListResponse(BaseModel):
+    """Response schema for list videos endpoint."""
+
+    videos: list[VideoListItem] = Field(..., description="List of videos")
+    total: int = Field(..., description="Total number of videos in database")
+    skip: int = Field(..., description="Number of items skipped")
+    limit: int = Field(..., description="Maximum items returned")
+    count: int = Field(..., description="Number of items in this response")

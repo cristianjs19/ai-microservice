@@ -24,6 +24,7 @@ A FastAPI-based microservice that processes raw video transcripts, formats them 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
 | `POST` | `/api/v1/search` | Perform RAG query with optional authentication (query, channel_id, top_k, similarity_threshold). If authenticated, search is tracked in history |
+| `GET` | `/api/v1/videos` | List all processed videos with pagination (skip, limit). Returns video metadata and processing status |
 | `POST` | `/api/v1/process-video-by-id` | Manually trigger processing for a specific source_video_id (testing/debugging) |
 | `GET` | `/api/v1/stats` | Get service statistics (processed count, pending count, failed count, total chunks) |
 

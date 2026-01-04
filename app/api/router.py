@@ -3,7 +3,7 @@
 from fastapi import APIRouter
 
 from app.api.v1 import auth
-from app.api.v1.endpoints import search, stats
+from app.api.v1.endpoints import search, stats, videos
 from app.config import settings
 
 # Create the main API router
@@ -26,4 +26,10 @@ api_router.include_router(
     stats.router,
     prefix=settings.api_v1_prefix,
     tags=["stats"],
+)
+
+api_router.include_router(
+    videos.router,
+    prefix=settings.api_v1_prefix,
+    tags=["videos"],
 )

@@ -13,6 +13,8 @@ from app.api.v1.schemas.search import (
     SearchResponse,
     SearchResultItem,
     StatsResponse,
+    VideoListItem,
+    VideoListResponse,
 )
 
 __all__ = [
@@ -28,4 +30,6 @@ __all__ = [
     "SearchResponse",
     "SearchResultItem",
     "StatsResponse",
+    "VideoListItem",
+    "VideoListResponse",
 ]

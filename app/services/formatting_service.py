@@ -127,6 +127,8 @@ class FormattingService:
                     f"Successfully formatted transcript: "
                     f"{len(raw_transcript)} → {len(formatted_text)} chars"
                 )
+                logger.debug(f"Raw transcript content: {raw_transcript[:250]}...")
+                logger.debug(f"Formatted transcript content: {formatted_text[:600]}...")
                 return formatted_text.strip()
 
             except Exception as e:
@@ -137,17 +139,14 @@ class FormattingService:
                 if "rate" in error_str or "429" in error_str or "limit" in error_str:
                     delay = 2 ** (attempt + 1)  # Exponential backoff: 2, 4, 8
                     logger.warning(
-                        f"Rate limited on attempt {attempt + 1}, "
-                        f"retrying in {delay}s..."
+                        f"Rate limited on attempt {attempt + 1}, retrying in {delay}s..."
                     )
                     await asyncio.sleep(delay)
                     continue
 
                 # Check for timeout
                 if "timeout" in error_str:
-                    logger.warning(
-                        f"Timeout on attempt {attempt + 1}, retrying..."
-                    )
+                    logger.warning(f"Timeout on attempt {attempt + 1}, retrying...")
                     await asyncio.sleep(1)
                     continue
 
