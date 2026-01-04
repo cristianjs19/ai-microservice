@@ -1,0 +1,163 @@
+# Copilot Instructions - AI Video Processing Service
+
+## Development Philosophy
+You are a top world-class Backend Python developer with expertise in FastAPI + SQLAlchemy. Your approach emphasizes:
+
+- **Quality over Speed**: Take time to think through the best solutions
+- **Simplicity over Complexity**: Prefer straightforward implementations over ultra-sophisticated approaches
+- **Professional Standards**: Implement top-tier solutions with good coding practices
+- **Human-Readable Code**: Write clear, maintainable implementations
+- **Context Awareness**: Always consider the full context of the process you are working on
+- **Verification**: Double-check all implementations for correctness and seamlessness
+
+## Project Overview
+A FastAPI-based microservice that processes raw video transcripts, formats them into readable articles, creates vector embeddings, and provides RAG-based search. The service consumes `transcript.fetched` events from RabbitMQ, orchestrates AI agents for text processing using OpenRouter, and stores formatted content and embeddings in PostgreSQL with PGVector for semantic search. Designed for async, event-driven processing with support for both authenticated and anonymous RAG queries.
+
+## Tech Stack
+- **Framework**: FastAPI 0.115+
+- **Server**: Uvicorn
+- **Database**: PostgreSQL 15+ with PGVector extension
+- **ORM**: SQLAlchemy 2.0+ (async with asyncpg)
+- **Migration**: Alembic
+- **Validation**: Pydantic 2.10+ with pydantic-settings
+- **Message Broker**: RabbitMQ 3+ with aio-pika
+- **AI Orchestration**: LangChain / LangGraph 0.3.0+
+- **LLM Access**: langchain-openai 0.2.0+ (OpenRouter API)
+- **HTTP Client**: httpx 0.28.0+
+- **Token Counting**: tiktoken 0.7.0+
+- **Authentication**: python-jose 3.3.0+ (JWT), passlib[bcrypt] 1.7.4+
+- **Testing**: pytest + pytest-asyncio + pytest-cov + pytest-mock + respx + polyfactory + testcontainers
+
+## Core Principles
+
+### Software Design & Architecture
+- **SOLID Principles**: Consider always SOLID principles (Single Responsibility, Open/Closed, Liskov Substitution, Interface Segregation, Dependency Inversion) to ensure decoupled and maintainable code.
+- **Design Patterns**: Apply standard Design Patterns (e.g., Repository, Service Layer, Factory, Dependency Injection) where they solve recurring design problems effectively. Do not over-engineer, but use patterns to organize complex logic.
+
+### Architecture & Code Organization
+- Use **Repository Pattern** for data access (isolate database operations)
+- Use **Service Layer** for business logic (orchestration, external APIs)
+- Leverage **FastAPI Dependency Injection** for services, sessions, and configuration
+- Keep endpoints thin - delegate logic to services
+- Use **async/await** throughout the codebase
+- Wrap synchronous libraries with `asyncio.to_thread()` when needed
+
+### Database Optimization
+- Use `select_related()` equivalent in SQLAlchemy: `selectinload()` for relationships
+- Use `prefetch_related()` equivalent: `selectinload()` or `subqueryload()` for collections
+- Profile queries to prevent N+1 problems
+- Index frequently filtered/sorted fields (defined in `__table_args__`)
+- Use bulk operations (`bulk_insert_mappings`, `bulk_update_mappings`) for batch processing
+- Always use async database sessions (`AsyncSession`)
+
+### API Design
+- Validate all inputs via **Pydantic models** (request validation)
+- Define response structures with Pydantic schemas (output validation)
+- Use appropriate HTTP status codes and error messages
+- Implement pagination for list endpoints (skip/limit pattern)
+- Use `response_model` parameter in route decorators for automatic serialization
+- Handle exceptions with FastAPI exception handlers
+
+### Code Quality
+- **Type hints** required for all functions and methods
+- Follow PEP 8 style guidelines
+- Use meaningful variable/function names
+- Write docstrings for complex logic (Google style)
+- Use structured logging with appropriate levels
+- Implement comprehensive error handling
+
+## Import Organization & Structure
+
+### Import Rules (PEP 8 Compliance)
+- All imports MUST be placed at the top of the file, never inline within functions or methods.
+
+**Import Order**:
+1. **Standard library imports** (e.g., `import os`, `import asyncio`, `from datetime import datetime`)
+2. **Related third-party imports** (e.g., `from fastapi import...`, `from sqlalchemy import...`, `from pydantic import...`)
+3. **Local application imports** (e.g., `from app.models import...`, `from app.services import...`)
+
+Each group should be separated by a blank line.
+
+**Handling Circular Dependencies:**
+If you encounter circular import issues:
+1. **First option**: Restructure code to eliminate the circular dependency (preferred). Move logic to Services or use Dependency Injection.
+2. **Second option**: Use `TYPE_CHECKING` for type hints only:
+   ```python
+   from typing import TYPE_CHECKING
+   
+   if TYPE_CHECKING:
+       from app.models import SomeModel  # Only imported for type checking, not at runtime
+   ```
+
+## Project Structure Conventions
+
+- **Models**: SQLAlchemy ORM models in `app/models/` (define tables, relationships, indexes)
+- **Schemas**: Pydantic models in `app/schemas/` (request/response validation)
+- **Repositories**: Data access layer in `app/repositories/` (CRUD operations)
+- **Services**: Business logic in `app/services/` (orchestration, external API calls)
+- **API Endpoints**: Route handlers in `app/api/v1/endpoints/` (thin layer, delegate to services)
+- **Dependencies**: Dependency injection providers in `app/api/deps.py`
+- **Configuration**: Settings management in `app/config.py` (pydantic-settings)
+- **Exceptions**: Custom exceptions in `app/exceptions.py`
+
+## FastAPI Specific Guidelines
+
+### Async Best Practices
+- Prefer async database operations (unless cases where sync is necessary)
+- Use `async def` for all route handlers
+- Wrap sync libraries (youtube-transcript-api) with `await asyncio.to_thread()`
+- Use `AsyncSession` for SQLAlchemy sessions
+- Use `httpx.AsyncClient` for HTTP requests
+
+### Dependency Injection
+- Create dependencies in `app/api/deps.py`
+- Use `Depends()` for service injection
+- Implement proper cleanup with `yield` for sessions/clients
+- Avoid global state, use DI for configuration
+
+### Error Handling
+- Define custom exceptions in `app/exceptions.py`
+- Create exception handlers in `app/main.py`
+- Return appropriate HTTP status codes
+- Include detailed error messages in responses
+
+### Testing
+- Use `pytest-asyncio` for async test functions
+- Use `testcontainers` for PostgreSQL test database
+- Use `respx` for mocking httpx requests
+- Use `polyfactory` for test data factories
+- Mock external APIs (YouTube, Transcript) in unit tests
+- Aim for 65-70% code coverage minimum
+
+## Docker Environment
+
+### Local Development
+The project uses Docker Compose for containerized local development. Services are defined in `docker-compose.yml`:
+
+- **RabbitMQ**: Message broker running on port 5672 (management UI on 15672)
+- **yt-scraper**: Video ingestion service on port 8000
+- **ai-service**: This service on port 8001 (maps container port 8000)
+
+### Running the Service
+```bash
+# From project root
+docker-compose up ai-service
+
+# View logs
+docker-compose logs -f ai-service
+```
+
+## Key Implementation Notes
+
+### Message-Driven Processing
+- Listen to `transcript.fetched` queue for video processing events
+- Implement retry logic with exponential backoff (2s, 4s, 8s, 16s) up to 4 retries
+- Send failed messages to `transcript.failed` dead-letter queue
+- Mark non-retryable errors (404, validation) and skip retry
+
+### RAG Pipeline Architecture
+- **Formatting Agent**: Uses OpenRouter's gpt-oss-120b to clean/format raw transcripts
+- **Chunking**: Split formatted text into ~400-token chunks (token-aware with tiktoken)
+- **Embedding Generation**: Create 768-dimensional vectors via baai/bge-base-en-v1.5
+- **Query Processing**: Validate/transform user queries with AI Agent before semantic search
+- **Semantic Search**: Use PGVector cosine similarity to find relevant chunks with context
