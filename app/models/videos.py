@@ -70,7 +70,11 @@ class VideoDocument(Base):
     formatted_content: Mapped[str] = mapped_column(Text, nullable=False)
 
     status: Mapped[ProcessingStatus] = mapped_column(
-        SAEnum(ProcessingStatus, name="processing_status_enum"),
+        SAEnum(
+            ProcessingStatus,
+            name="processing_status_enum",
+            values_callable=lambda x: [e.value for e in x],
+        ),
         default=ProcessingStatus.PENDING,
         nullable=False,
     )

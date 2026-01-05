@@ -163,7 +163,7 @@ class FetchingServiceClient:
             FetchingServiceError: If the request fails.
         """
         logger.debug(f"Fetching metadata for video: {video_id}")
-        response = await self._request_with_retry("GET", f"/videos/{video_id}")
+        response = await self._request_with_retry("GET", f"/api/v1/videos/{video_id}")
         data = response.json()
         logger.info(f"Successfully fetched metadata for video: {video_id}")
         return data
@@ -181,7 +181,9 @@ class FetchingServiceClient:
             FetchingServiceError: If the request fails.
         """
         logger.debug(f"Fetching caption for video: {video_id}")
-        response = await self._request_with_retry("GET", f"/videos/{video_id}/caption")
+        response = await self._request_with_retry(
+            "GET", f"/api/v1/videos/{video_id}/caption"
+        )
         caption = response.text
         logger.info(
             f"Successfully fetched caption for video: {video_id} "

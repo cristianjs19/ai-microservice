@@ -1,12 +1,14 @@
 """Embedding generation service.
 
 This service generates vector embeddings for text chunks
-using OpenRouter's embedding API.
+using OpenRouter's embedding API or a custom HTTP implementation.
 """
 
 import asyncio
+import json
 import logging
 
+import httpx
 from langchain_openai import OpenAIEmbeddings
 
 from app.config import settings
@@ -56,10 +58,19 @@ class EmbeddingService:
     def embeddings(self) -> OpenAIEmbeddings:
         """Get or create the embeddings instance."""
         if self._embeddings is None:
+            # OpenRouter supports OpenAI embedding models
+            # Use text-embedding-3-small or text-embedding-ada-002
             self._embeddings = OpenAIEmbeddings(
                 model=self.model_name,
                 openai_api_key=self.api_key,
                 openai_api_base=self.api_base,
+                # Add explicit headers for OpenRouter
+                headers={
+                    "HTTP-Referer": "https://ai-processing-service",
+                    "X-Title": "AI Video Processing",
+                },
+                # Disable response validation to see raw responses
+                check_embedding_ctx_length=False,
             )
         return self._embeddings
 
@@ -120,8 +131,70 @@ class EmbeddingService:
                     f"(attempt {attempt + 1}/{self.max_retries})"
                 )
 
-                # Generate embeddings
+                logger.debug(f"Using model: {self.model_name}, API base: {self.api_base}")
+                logger.debug(f"First chunk preview: {chunks[0][:100]}...")
+
+                # Try direct HTTP call first to see the raw response
+                try:
+                    async with httpx.AsyncClient() as client:
+                        response = await client.post(
+                            f"{self.api_base}/embeddings",
+                            headers={
+                                "Authorization": f"Bearer {self.api_key}",
+                                "Content-Type": "application/json",
+                                "HTTP-Referer": "https://ai-processing-service",
+                                "X-Title": "AI Video Processing",
+                            },
+                            json={
+                                "model": self.model_name,
+                                "input": chunks,
+                            },
+                            timeout=60.0,
+                        )
+                        logger.info(f"Raw API response status: {response.status_code}")
+                        response_data = response.json()
+                        logger.info(
+                            f"Raw API response keys: {list(response_data.keys())}"
+                        )
+                        logger.info(
+                            f"Raw API response: {json.dumps(response_data, indent=2)[:500]}"
+                        )
+
+                        # Check if we got embeddings data
+                        if "data" in response_data and len(response_data["data"]) > 0:
+                            embeddings = [
+                                item["embedding"] for item in response_data["data"]
+                            ]
+                            logger.info(
+                                f"Extracted {len(embeddings)} embeddings via HTTP"
+                            )
+                            logger.info(
+                                f"First embedding dimension: {len(embeddings[0])}"
+                            )
+
+                            # Validate and return
+                            self._validate_embeddings(embeddings, len(chunks))
+                            return embeddings
+                        else:
+                            logger.error(
+                                f"No data field in response or empty data: {response_data}"
+                            )
+                except Exception as http_error:
+                    logger.error(f"Direct HTTP call failed: {http_error}")
+                    logger.debug("Falling back to LangChain implementation")
+
+                # Fallback to LangChain
                 embeddings = await self.embeddings.aembed_documents(chunks)
+
+                logger.debug(f"Raw embeddings response type: {type(embeddings)}")
+                logger.debug(
+                    f"Raw embeddings response length: {len(embeddings) if embeddings else 0}"
+                )
+                if embeddings and len(embeddings) > 0:
+                    logger.debug(f"First embedding type: {type(embeddings[0])}")
+                    logger.debug(
+                        f"First embedding length: {len(embeddings[0]) if isinstance(embeddings[0], list) else 'N/A'}"
+                    )
 
                 # Validate results
                 self._validate_embeddings(embeddings, len(chunks))
@@ -137,6 +210,9 @@ class EmbeddingService:
             except Exception as e:
                 last_error = e
                 error_str = str(e).lower()
+
+                logger.error(f"Embedding generation error: {type(e).__name__}: {e}")
+                logger.debug(f"Full error details: {repr(e)}", exc_info=True)
 
                 # Check for rate limit errors
                 if "rate" in error_str or "429" in error_str or "limit" in error_str:
