@@ -213,8 +213,5 @@ The service includes JWT-based authentication with the following features:
 - **Automatic history tracking**: Authenticated searches are automatically logged
 - **Token-based auth**: Access tokens (30min) and refresh tokens (7 days)
 - **Secure passwords**: Bcrypt hashing with strength requirements (8+ chars, uppercase, lowercase, digit)
-- **User profiles**: Optional phone and full name fields
-
-See `AUTHENTICATION.md` for complete documentation.
 
 ---

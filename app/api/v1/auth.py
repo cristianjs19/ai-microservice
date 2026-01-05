@@ -82,19 +82,19 @@ async def register(
 
 @router.post(
     "/login",
-    response_model=UserWithTokens,
+    response_model=TokenResponse,
     summary="Login user",
     description="""
     Authenticate user with email and password.
     
-    Returns user data with access and refresh tokens on successful authentication.
+    Returns access and refresh tokens on successful authentication.
     """,
 )
 async def login(
     credentials: UserLogin,
     user_repo: Annotated[UserRepository, Depends(get_user_repository)],
     security_utils: Annotated[SecurityUtils, Depends(get_security_utils)],
-) -> UserWithTokens:
+) -> TokenResponse:
     """Login user and return tokens."""
     # Get user by email
     user = await user_repo.get_by_email(credentials.email)
@@ -124,11 +124,8 @@ async def login(
     # Generate tokens
     tokens = security_utils.create_token_pair(str(user.id))
 
-    # Return user with tokens
-    return UserWithTokens(
-        **user.__dict__,
-        tokens=TokenResponse(**tokens),
-    )
+    # Return tokens only
+    return TokenResponse(**tokens)
 
 
 @router.post(
