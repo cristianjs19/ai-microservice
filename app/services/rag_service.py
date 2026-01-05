@@ -238,6 +238,7 @@ class RAGService:
         distance_threshold = 1 - similarity_threshold
 
         # Build the query using raw SQL for PGVector operations
+        # Format the vector as a PostgreSQL array string
         query_vector_str = "[" + ",".join(str(x) for x in query_embedding) + "]"
 
         sql = text("""
@@ -249,12 +250,12 @@ class RAGService:
                 vd.source_video_id,
                 vd.source_channel_id,
                 vd.meta_data,
-                (vc.embedding <=> :query_vector::vector) as distance
+                (vc.embedding <=> CAST(:query_vector AS vector)) as distance
             FROM video_chunks vc
             JOIN video_documents vd ON vc.document_id = vd.id
             WHERE vd.status = :status
-              AND (vc.embedding <=> :query_vector::vector) < :distance_threshold
-              AND (:channel_id IS NULL OR vd.source_channel_id = :channel_id)
+              AND (vc.embedding <=> CAST(:query_vector AS vector)) < :distance_threshold
+              AND (CAST(:channel_id AS TEXT) IS NULL OR vd.source_channel_id = :channel_id)
             ORDER BY distance ASC
             LIMIT :top_k
         """)
