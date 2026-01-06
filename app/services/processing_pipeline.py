@@ -82,11 +82,10 @@ class VideoProcessingPipeline:
         Returns:
             dict: Extracted metadata for JSONB storage.
         """
-        channel_info = metadata.get("channel", {})
-
         return {
-            "video_title": metadata.get("title", ""),
-            "channel_name": channel_info.get("name", ""),
+            "title": metadata.get("title", ""),
+            "channel_name": metadata.get("channel_name", ""),
+            "channel_id": metadata.get("channel_id", ""),
             "published_at": metadata.get("upload_date"),
             "duration_seconds": metadata.get("duration"),
             "view_count": metadata.get("view_count"),
@@ -184,9 +183,7 @@ class VideoProcessingPipeline:
 
         await session.flush()
 
-        logger.info(
-            f"Created {len(video_chunks)} chunks for document {document.id}"
-        )
+        logger.info(f"Created {len(video_chunks)} chunks for document {document.id}")
         return video_chunks
 
     async def process_video(self, video_id: str) -> VideoDocument:
@@ -242,7 +239,9 @@ class VideoProcessingPipeline:
                 chunks = self.chunking_service.chunk_text(formatted_content)
 
                 # Step 5: Generate embeddings
-                logger.info(f"[{video_id}] Generating embeddings for {len(chunks)} chunks...")
+                logger.info(
+                    f"[{video_id}] Generating embeddings for {len(chunks)} chunks..."
+                )
                 chunk_contents = [content for _, content in chunks]
                 embeddings = await self.embedding_service.embed_documents(chunk_contents)
 
@@ -284,9 +283,7 @@ class VideoProcessingPipeline:
                         )
                         await session.commit()
                     except Exception as update_error:
-                        logger.error(
-                            f"Failed to update document status: {update_error}"
-                        )
+                        logger.error(f"Failed to update document status: {update_error}")
 
                 # Re-raise as ProcessingError
                 if isinstance(e, ProcessingError):
