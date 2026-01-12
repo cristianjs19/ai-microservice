@@ -55,7 +55,7 @@ class Settings(BaseSettings):
 
     # RAG
     rag_top_k_default: int = 5
-    rag_similarity_threshold_default: float = 0.7
+    rag_similarity_threshold_default: float = 0.5  # Lower threshold for better recall
 
     # API
     api_v1_prefix: str = "/api/v1"

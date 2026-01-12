@@ -14,13 +14,13 @@ from uuid import UUID
 from langchain_core.messages import HumanMessage, SystemMessage
 from langchain_openai import ChatOpenAI
 from pydantic import BaseModel, Field
-from sqlalchemy import select, text
+from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import settings
 from app.core.database import get_session_context
-from app.exceptions import EmbeddingError, QueryGuardrailError
-from app.models import ProcessingStatus, VideoChunk, VideoDocument
+from app.exceptions import QueryGuardrailError
+from app.models import ProcessingStatus
 from app.services.embedding_service import get_embedding_service
 
 logger = logging.getLogger(__name__)
@@ -237,9 +237,16 @@ class RAGService:
         # PGVector uses cosine distance = 1 - cosine similarity
         distance_threshold = 1 - similarity_threshold
 
+        logger.info(
+            f"Vector search params: top_k={top_k}, "
+            f"similarity_threshold={similarity_threshold}, "
+            f"distance_threshold={distance_threshold}, "
+            f"channel_id={channel_id}"
+        )
+
         # Build the query using raw SQL for PGVector operations
-        # Format the vector as a PostgreSQL array string
-        query_vector_str = "[" + ",".join(str(x) for x in query_embedding) + "]"
+        # Format the vector as a PostgreSQL array string with proper precision
+        query_vector_str = "[" + ",".join(f"{x:.8f}" for x in query_embedding) + "]"
 
         sql = text("""
             SELECT 
@@ -272,6 +279,16 @@ class RAGService:
         )
 
         rows = result.fetchall()
+        logger.info(f"Vector search returned {len(rows)} results before filtering")
+
+        if len(rows) == 0:
+            logger.warning(
+                f"No results found! Check if: "
+                f"1) Embeddings exist in DB, "
+                f"2) Status is COMPLETED, "
+                f"3) Distance threshold ({distance_threshold}) is too strict"
+            )
+
         return [
             {
                 "chunk_id": row.chunk_id,

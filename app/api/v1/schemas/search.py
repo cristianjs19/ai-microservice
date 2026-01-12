@@ -31,7 +31,7 @@ class SearchQueryRequest(BaseModel):
         description="Maximum number of video candidates to return.",
     )
     similarity_threshold: float = Field(
-        0.7,
+        0.6,
         ge=0.0,
         le=1.0,
         description="Minimum similarity score (0.7 recommended for BGE models).",
